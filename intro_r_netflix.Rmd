@@ -1,10 +1,13 @@
 ---
-title: "Data analysis mini - coding experience"
+title: "A first look at data with R: Netflix"
 output:
   html_document:
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
+    toc_depth: 2
+    theme: flatly
+    highlight: tango
     df_print: paged
     css: styles.css
   pdf_document: default
@@ -35,7 +38,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.align = 'center')
 
 # Introduction 
 
-Welcome to CodeClan! In this session we hope to give you a small taste of modern data analysis in a state-of-the-art environment: the `R` scripting language. `R` was developed from the ground up with data analysis and statistics in mind. It offers many advanced tools for data cleaning and manipulation, visualisation and machine learning! Best of all, it is **free and open source**, so you can take what you learn here today, download `R` at home or at work, and continue using it, learning as you go! 
+This lesson began as a free coding session I wrote for CodeClan. In this session we hope to give you a small taste of modern data analysis in a state-of-the-art environment: the `R` scripting language. `R` was developed from the ground up with data analysis and statistics in mind. It offers many advanced tools for data cleaning and manipulation, visualisation and machine learning! Best of all, it is **free and open source**, so you can take what you learn here today, download `R` at home or at work, and continue using it, learning as you go! 
 
 We'll cover:
 
@@ -54,12 +57,12 @@ knitr::include_graphics("images/netflix.jpeg")
 
 <br>
 
-The dataset we're going to use consists of tv shows and movies available on Netflix as of 2019. The dataset is collected from Flixable which is a third-party Netflix search engine. You can find it on the [R for Data Science Tidy Tuesday's Github profile.](https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-04-20/readme.md)  
+We are using the historical Netflix catalogue snapshot bundled with the April 2021 TidyTuesday dataset. It contains 7,787 titles with original release years from 1925 to 2021. It is not a live catalogue, and it contains no viewing figures. The dataset is collected from Flixable which is a third-party Netflix search engine. You can find it on the [R for Data Science Tidy Tuesday's Github profile.](https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-04-20/readme.md)  
 
 
 For this session, we will be looking at two separate questions:
 
-* Were movies or tv shows more popular across the years?   
+* How many films and TV shows in this catalogue were originally released in each year?   
 * Which year had the most releases?   
 
 We will use R to answer these questions. 
@@ -328,7 +331,7 @@ We will be using these verbs to answer our analysis questions.
  
 Before we get into actually working with our data, you have to understand the concept of a **data pipeline**. It's typical to use a few functions to manipulate and visualise data, and often we arrange these functions in **pipes**. All this means is that, at each step, we take the **output** from one function and pass it as the **input** to another. If you like, think of this as a production line in a factory: data goes along a conveyor belt, and each function is a machine on the line that does something with or to the data, before passing the data on to the next machine.
 
-We accomplish all of this using the handy-dandy `pipe %>%` operator from the `maggittr` package in R.  
+We accomplish all of this using the handy-dandy `pipe %>%` operator from the `magrittr` package in R.  
 
 To help you understand this, let's look at how we might describe a real life process in terms of functions and pipes. Take the example below where we are baking a cake!
 
@@ -364,7 +367,7 @@ Great, now let's get into data wrangling and answering our questions! We're goin
 
 Let's remind ourselves of our analysis questions: 
 
-* Were movies or tv shows more popular across the years?   
+* How many films and TV shows in this catalogue were originally released in each year?   
 * Which year had the most releases?   
   
 Let's first look at our data and see what data we'll need to answer these.
@@ -398,11 +401,11 @@ netflix %>%
 ```
 <br> 
 
-We can also see we have data from 1943 until the year 2020. For the sake of this lesson, let's only focus on the last 20 years. Again, we can incorporate this in our pipe later.  
+The bundled data spans 1925 to 2021. For this lesson, let's focus on titles originally released from 2000 onwards. Again, we can incorporate this in our pipe later.  
 
 <br> 
 
-# Were movies or tv shows more popular across the years? 
+# How many films and TV shows in this catalogue were originally released in each year? 
 
 So we're ready to start writing our first pipe to answer our first question. Let's say want to find out how releases of each `type` there were each year since 2000. If we were doing this manually and we had a pile of sheets of paper, each containing details of a class, we would:
 
@@ -429,10 +432,10 @@ Great, we've just made our first table in R with our first pipe. Let's break dow
 * first, create a variable `netflix_groups` to store our final data once `R` finishes running the pipe
 * take our `netflix` data, **and then**
 * filter out only the years we want (>=2000)  
-* pass it in to the `group_by()` function (we're asking `R` here to group the rows by `type` and `department`), **and then**
+* pass it in to the `group_by()` function (we're asking `R` here to group the rows by `type` and `release_year`), **and then**
 * pass the grouped data into the `summarise()` function (this totals the number of showings in each group)
 
-There we go! In a few lines of code we have values for the numbers of movies/tv sbows in each year. 
+There we go! In a few lines of code we have values for the numbers of movies/TV shows in each year. 
 
 Great, that's a useful table. Now let's see our first visualisation! 
 
@@ -475,8 +478,13 @@ netflix_groups %>%
   geom_line() + 
   geom_point() + 
   xlab("Release year") + 
-  ylab("Total movie count") + 
-  ggtitle("Total number of netflix releases in the last 20 years")
+  ylab("Catalogue titles") + 
+  ggtitle("Catalogue titles by original release year") +
+  scale_colour_manual(values = c("Movie" = "#E50914", "TV Show" = "#117865")) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top")
+
+ggsave("images/catalogue-by-year.png", width = 9, height = 5, dpi = 160, bg = "white")
 ```
 
 <br> 
@@ -492,9 +500,9 @@ Let's break down what this command is doing:
 
 There you have it - your first visualisation in `R`! And it does let us answer our first question. 
 
-> Were movies or tv shows more popular across the years?   
+> How many films and TV shows in this catalogue were originally released in each year?   
 
-It looks like Movies were, until recently!
+The chart compares the number of titles in this snapshot by type and original release year. A higher count means more catalogue entries, not more viewers. We cannot infer popularity from these data.
 
 Great. Now we can answer our final question. 
 
@@ -508,6 +516,7 @@ If we look again at our data table, we can actually find this out pretty easily 
 
 ```{r}
 netflix_groups %>%
+  group_by(type) %>%
   slice_min(total_year)
 ```
 
@@ -519,10 +528,19 @@ If we want to find the max values, we can use the `slice_max()` function.
 
 ```{r}
 netflix_groups %>%
+  group_by(type) %>%
   slice_max(total_year)
 ```
 
-And there we go! Our questions answered. 
+These results give the minimum and maximum year within each type. To answer the question across the whole catalogue, we need to count by release year first:
+
+```{r}
+netflix %>%
+  count(release_year, name = "catalogue_titles") %>%
+  slice_max(catalogue_titles)
+```
+
+This counts titles by their original release year; it does not measure when Netflix added them or how many people watched them. 
 
 
 
@@ -530,8 +548,13 @@ And there we go! Our questions answered.
 
 Hopefully this short session has made you enthusiastic to find out more about data analysis in `R`! There's so much more we would have loved to tell you if we had the time. Here are some suggested resources if you'd like to go further:
 
-* Have a look at our full 14-week data analysis course if you would like to build the skills to let you work in this exciting field!
-* Watch this space at CodeClan for forthcoming short courses on data analysis in `R` and `Python` taught in a similar style to this session
 * The classic book on data analysis in the `tidyverse` is 'R for Data Science' by Hadley Wickham and Garrett Grolemund. You can either buy a paper copy of this, or find it legitimately available for free [here](https://r4ds.had.co.nz/)
 * There are a number of excellent online courses available on `R`. [This](https://www.udemy.com/course/data-science-and-machine-learning-bootcamp-with-r/) is quite a good starting course, but don't buy it at full price!
 
+
+
+# Try it yourself
+
+1. Repeat the chart using only titles released from 2010 onwards.
+2. Find the release year with the largest count of films and the largest count of TV shows.
+3. Explain why the number of titles in the catalogue cannot tell us which type is most popular with viewers.
